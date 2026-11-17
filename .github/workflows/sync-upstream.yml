@@ -1,0 +1,30 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: 同步上游 master
+        run: |
+          set -euo pipefail
+          git remote add upstream https://github.com/LaurensBosscher/AdGuardHome-Next-Gen.git
+          if ! git fetch --no-tags upstream master; then
+            echo "::notice::上游不可读，本轮跳过同步"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --no-edit FETCH_HEAD
+          git push origin HEAD:master
